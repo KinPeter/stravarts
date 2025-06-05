@@ -20,7 +20,9 @@
 3. Set up the environment variables into the `.env` file.
 
    ```bash
-   TBA
+   # Mongo DB connection string and database name
+   MONGODB_URI=
+   MONGODB_NAME=
 
    # Root path on the server where the script is running
    ROOT_PATH=
@@ -32,7 +34,7 @@
 Run in local:
 
 ```bash
-fastapi dev main.py
+fastapi dev api/main.py
 ```
 
 Open your browser:
@@ -43,5 +45,7 @@ Open your browser:
 Publish new docker image:
 
 ```bash
+cd api
+
 ./deploy.sh
 ```

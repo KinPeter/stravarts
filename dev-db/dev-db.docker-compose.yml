@@ -1,0 +1,15 @@
+services:
+  strava-mongodb_server:
+    image: mongo:8.0
+    environment:
+      MONGO_INITDB_DATABASE: strava
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin
+    ports:
+      - 29017:27017
+    volumes:
+      - ./dev-db.mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+      - strava-mongodb_data_container:/data/db
+
+volumes:
+  strava-mongodb_data_container:

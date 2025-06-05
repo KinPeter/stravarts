@@ -1,3 +1,6 @@
+# Docker compose file to run the API on the server
+# using the latest deployed image from Docker Hub
+
 services:
   pkrddit:
     image: kinp/stravarts:latest
