@@ -11,8 +11,6 @@ db.createUser({
 
 db = db.getSiblingDB("strava");
 
-db.createCollection("test");
-
-db.getCollection("test").insertOne({ name: "test", message: "Hello, world!" });
-
 db.createCollection("users");
+db.createCollection("sync_metadata");
+db.createCollection("activities");

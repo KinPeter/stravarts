@@ -10,9 +10,15 @@ from api.utils.logger import get_logger
 class DbCollection(str, Enum):
     USERS = "users"
     ACTIVITIES = "activities"
+    SYNC_METADATA = "sync_metadata"
 
 
 class MongoDbManager:
+    """
+    This class handles the connection to MongoDB, provides access to the database,
+    and ensures proper cleanup of resources.
+    """
+
     def __init__(self):
         self.logger = get_logger()
         self.mongo_client = None
