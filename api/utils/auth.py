@@ -1,3 +1,5 @@
+import string
+import secrets
 import hashlib
 import os
 from fastapi import HTTPException, Header, Request, status
@@ -45,6 +47,11 @@ async def auth_user(
         **user,
         strava_token=strava_token,
     )
+
+
+def generate_alphanumeric_key(length=32):
+    alphabet = string.ascii_letters + string.digits  # a-z, A-Z, 0-9
+    return "".join(secrets.choice(alphabet) for _ in range(length))
 
 
 def hash_api_key(api_key: str) -> str:

@@ -1,9 +1,8 @@
-import secrets
 import uuid
 from fastapi import HTTPException, status
 from api.types.auth import RegistrationRequest, RegistrationResponse
 from api.types.common import AsyncDatabase
-from api.utils.auth import hash_api_key
+from api.utils.auth import generate_alphanumeric_key, hash_api_key
 from api.utils.db import DbCollection
 from api.utils.logger import get_logger
 
@@ -24,7 +23,7 @@ async def register_user(
     logger.info(f"Registering new user: {data.username} <{data.email}>")
 
     user_id = str(uuid.uuid4())
-    api_key = secrets.token_urlsafe(32)
+    api_key = generate_alphanumeric_key()
 
     try:
         api_key_hash = hash_api_key(api_key)
