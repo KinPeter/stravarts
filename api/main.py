@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
 from api.utils.db import MongoDbManager
+from api.utils.logger import LoggingMiddleware
 from api.utils.version import get_version
 from api.routers import auth, ui, routes
 
@@ -37,6 +38,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.add_middleware(LoggingMiddleware)
 
 app.include_router(ui.router)
 app.include_router(auth.router)

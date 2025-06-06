@@ -6,7 +6,7 @@ router = APIRouter(
 )
 
 
-@router.get("/", response_class=HTMLResponse)
+@router.get("/", response_class=HTMLResponse, summary="Return the UI index.html")
 async def read_root():
     with open("ui/index.html") as f:
         html_content = f.read()

@@ -9,7 +9,19 @@ router = APIRouter(
 )
 
 
-@router.post("/sync", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/sync",
+    summary="Trigger a sync of activities from Strava",
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        401: {
+            "description": "Unauthorized",
+            "content": {
+                "application/json": {"example": {"detail": "Invalid API key."}}
+            },
+        },
+    },
+)
 async def post_sync_routes(req: Request, user=Depends(auth_user)) -> SyncResponse:
     db = req.app.state.db
     # FIXME: Implement the actual route synchronization logic here

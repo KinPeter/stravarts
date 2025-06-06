@@ -1,9 +1,15 @@
 import os
+from enum import Enum
 from pymongo import AsyncMongoClient
 from pymongo.server_api import ServerApi
 
 from api.types.common import AsyncDatabase
 from api.utils.logger import get_logger
+
+
+class DbCollection(str, Enum):
+    USERS = "users"
+    ACTIVITIES = "activities"
 
 
 class MongoDbManager:

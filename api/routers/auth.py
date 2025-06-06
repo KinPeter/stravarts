@@ -11,7 +11,16 @@ router = APIRouter(
 
 @router.post(
     "/register",
+    summary="Register a new user to get an API key",
     status_code=status.HTTP_201_CREATED,
+    responses={
+        409: {
+            "description": "Email already registered",
+            "content": {
+                "application/json": {"example": {"detail": "Email already registered"}}
+            },
+        },
+    },
 )
 async def post_register_user(
     body: RegistrationRequest, req: Request
