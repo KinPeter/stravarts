@@ -7,10 +7,13 @@ case "$1" in
     docker-compose -f "$COMPOSE_FILE" up
     ;;
   stop)
+    docker-compose -f "$COMPOSE_FILE" down
+    ;;
+  clear)
     docker-compose -f "$COMPOSE_FILE" down -v
     ;;
   *)
-    echo "Usage: $0 {start|stop}"
+    echo "Usage: $0 {start|stop|clear}"
     exit 1
     ;;
 esac

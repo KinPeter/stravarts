@@ -1,16 +1,17 @@
+from typing import Any
 import uuid
 from datetime import datetime, timezone
 from fastapi import HTTPException, status
 from api.types.auth import User
 from api.types.common import AsyncDatabase
-from api.types.routes import SyncResponse
+from api.types.routes import ActivityType, Heatmap, RoutesResponse, SyncResponse
 from api.utils.db import DbCollection
 from api.utils.logger import get_logger
 from api.utils.strava_api import StravaApi
 
 
 async def sync_routes(
-    db: AsyncDatabase, user: User, before: datetime | None, after: datetime | None
+    db: AsyncDatabase, user: User, after: datetime | None, before: datetime | None
 ) -> SyncResponse:
     logger = get_logger()
     strava = StravaApi(user.strava_token)
@@ -26,6 +27,7 @@ async def sync_routes(
         await sync_meta_collection.insert_one(user_sync_data)
 
     logger.info(f"Syncing routes for user: {user.username} ({user.id})")
+    just_synced_count = 0
     try:
         athlete = await strava.get_athlete()
         logger.info(
@@ -64,7 +66,6 @@ async def sync_routes(
             )
 
         already_synced = set(user_sync_data["synced_ids"])
-        just_synced_count = 0
 
         for activity in activities:
             strava_id = activity["id"]
@@ -103,7 +104,9 @@ async def sync_routes(
                 "strava_id": strava_id,
                 "user_id": user.id,
                 "name": activity.get("name", "Unnamed Activity"),
-                "start_date": activity["start_date"],
+                "start_date": datetime.fromisoformat(
+                    activity["start_date"].replace("Z", "+00:00")
+                ),
                 "distance": activity["distance"],
                 "type": activity["type"],
                 "route": latlng_data,
@@ -130,8 +133,67 @@ async def sync_routes(
         )
 
     except Exception as e:
+        logger.info(
+            f"Synced {just_synced_count} activities for {user.username} before the error."
+        )
         logger.error(f"Error syncing routes for user {user.username}: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Internal server error: Could not sync routes from Strava. - {str(e)}",
+            detail=f"Internal server error: Could not finish syncing routes from Strava. (Synced {just_synced_count} before the error.) - {str(e)}",
         )
+
+
+async def get_routes(
+    db: AsyncDatabase,
+    user: User,
+    before: datetime | None,
+    after: datetime | None,
+    types: list[ActivityType] | None = None,
+) -> RoutesResponse:
+    logger = get_logger()
+    activities_collection = db.get_collection(DbCollection.ACTIVITIES)
+
+    if not types:
+        types = [ActivityType.WALK, ActivityType.RUN, ActivityType.RIDE]
+
+    filter_query: dict[str, Any] = {"user_id": user.id}
+
+    filter_query["type"] = {
+        "$in": [t.value if hasattr(t, "value") else t for t in types]
+    }
+
+    date_filter = {}
+    if after:
+        date_filter["$gte"] = after
+    if before:
+        date_filter["$lte"] = before
+    if date_filter:
+        filter_query["start_date"] = date_filter
+
+    logger.info(
+        f"Fetching routes for user: {user.username} ({user.id}) with filters {str(filter_query)}"
+    )
+    routes = await activities_collection.find(filter_query).to_list()
+
+    if not routes:
+        logger.info(f"No routes found for user {user.username}")
+        return RoutesResponse(
+            heatmap=None,
+            after=None,
+            before=None,
+            types=[],
+            activity_count=0,
+        )
+
+    logger.info(f"Found {len(routes)} routes for user {user.username}")
+    print([(r["name"], r["start_date"], r["type"]) for r in routes])
+
+    heatmap = Heatmap()
+
+    return RoutesResponse(
+        heatmap=heatmap,
+        after=None,
+        before=None,
+        types=list(set(route["type"] for route in routes)),
+        activity_count=len(routes),
+    )

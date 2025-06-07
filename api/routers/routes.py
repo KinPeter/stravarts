@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, Request, status
+from datetime import datetime
+from fastapi import APIRouter, Depends, Query, Request, status
 
-from api.modules.routes import sync_routes
-from api.types.routes import SyncResponse
+from api.modules.routes import get_routes, sync_routes
+from api.types.routes import ActivityType, RoutesResponse, SyncResponse
 from api.utils.auth import auth_user
 from api.utils.query_validators import validate_before_after
 
@@ -9,6 +10,40 @@ router = APIRouter(
     prefix="/routes",
     tags=["routes"],
 )
+
+
+@router.get(
+    "",
+    summary="Get routes heatmap coordinates for the authenticated user",
+    description="This endpoint retrieves the routes heatmap coordinates for the authenticated user. You can filter the results by date range and activity type.",
+    responses={
+        401: {
+            "description": "Unauthorized",
+            "content": {
+                "application/json": {"example": {"detail": "Invalid API key."}}
+            },
+        },
+    },
+)
+async def get_get_routes(
+    req: Request,
+    user=Depends(auth_user),
+    after: datetime | None = Query(
+        None,
+        description="Filter activities after this date - ISO 8601 format, e.g., '2023-10-01T00:00:00Z'",
+    ),
+    before: datetime | None = Query(
+        None,
+        description="Filter activities before this date - ISO 8601 format, e.g., '2023-10-01T00:00:00Z'",
+    ),
+    types: list[ActivityType] | None = Query(
+        None,
+        description="Filter activities by type ('Walk', 'Run', 'Ride'). If not provided, all types are included.",
+    ),
+) -> RoutesResponse:
+    return await get_routes(
+        db=req.app.state.db, user=user, before=before, after=after, types=types
+    )
 
 
 @router.post(
