@@ -27,6 +27,9 @@
    # Root path on the server where the script is running
    ROOT_PATH=
 
+   # Secret string to be used for hashing
+   API_SECRET=
+
    ```
 
 ## API
