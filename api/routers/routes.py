@@ -14,8 +14,8 @@ router = APIRouter(
 
 @router.get(
     "",
-    summary="Get routes heatmap coordinates for the authenticated user",
-    description="This endpoint retrieves the routes heatmap coordinates for the authenticated user. You can filter the results by date range and activity type.",
+    summary="Get routes map coordinates for the authenticated user",
+    description="This endpoint retrieves the routes map coordinates for the authenticated user. You can filter the results by date range and activity type.",
     responses={
         401: {
             "description": "Unauthorized",

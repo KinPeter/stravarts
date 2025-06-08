@@ -4,8 +4,9 @@ from datetime import datetime, timezone
 from fastapi import HTTPException, status
 from api.types.auth import User
 from api.types.common import AsyncDatabase
-from api.types.routes import ActivityType, Heatmap, RoutesResponse, SyncResponse
+from api.types.routes import ActivityType, Routemap, RoutesResponse, SyncResponse
 from api.utils.db import DbCollection
+from api.utils.routemap import generate_routemap
 from api.utils.logger import get_logger
 from api.utils.strava_api import StravaApi
 
@@ -178,22 +179,23 @@ async def get_routes(
     if not routes:
         logger.info(f"No routes found for user {user.username}")
         return RoutesResponse(
-            heatmap=None,
-            after=None,
-            before=None,
+            routemap=None,
+            after=after.isoformat() if after else None,
+            before=before.isoformat() if before else None,
             types=[],
             activity_count=0,
         )
 
-    logger.info(f"Found {len(routes)} routes for user {user.username}")
-    print([(r["name"], r["start_date"], r["type"]) for r in routes])
+    logger.info(
+        f"Found {len(routes)} routes for user {user.username}, generating routemap."
+    )
 
-    heatmap = Heatmap()
+    routemap = generate_routemap(routes, sampling_rate=1)
 
     return RoutesResponse(
-        heatmap=heatmap,
-        after=None,
-        before=None,
+        routemap=routemap,
+        after=after.isoformat() if after else None,
+        before=before.isoformat() if before else None,
         types=list(set(route["type"] for route in routes)),
         activity_count=len(routes),
     )

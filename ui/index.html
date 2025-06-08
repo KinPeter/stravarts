@@ -4,8 +4,109 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Strava Routes</title>
+
+    <!-- Leaflet CSS and JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+    <!-- Leaflet.heat plugin -->
+    <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: Arial, sans-serif;
+      }
+
+      #container {
+        display: flex;
+        height: 100vh;
+      }
+
+      #controls {
+        width: 300px;
+        padding: 20px;
+        background-color: #f0f0f0;
+        overflow-y: auto;
+      }
+
+      #map {
+        width: 100%;
+        height: 100vh;
+        background-color: #464646;
+      }
+    </style>
   </head>
   <body>
-    <h1>Hello world</h1>
+    <div id="container">
+      <div id="controls">
+        <h1>Strava Routes map</h1>
+      </div>
+      <div id="map" style="height: 100vh"></div>
+    </div>
+
+    <script>
+      let map;
+
+      window.onload = () => {
+        initMap();
+
+        apiKey = localStorage.getItem("apiKey");
+        stravaToken = localStorage.getItem("stravaToken");
+
+        fetch("/routes", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Api-Key": apiKey || "",
+            "X-Strava-Token": stravaToken || "",
+          },
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data?.routemap?.points) {
+              addHeatLayer(data.routemap.points);
+            } else {
+              console.error("No route data available.");
+            }
+          })
+          .catch((error) => console.error("Error fetching routes:", error));
+      };
+
+      function initMap() {
+        // Ensure Leaflet and Leaflet.heat are loaded
+        if (typeof L === "undefined" || typeof L.heatLayer === "undefined") {
+          console.error("Leaflet or Leaflet.heat is not loaded.");
+          return;
+        }
+
+        // Initialize the map
+        map = L.map("map").setView([47.49, 19.06], 10);
+        // Add OpenStreetMap tile layer
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          maxZoom: 19,
+          attribution: "© OpenStreetMap contributors",
+        }).addTo(map);
+      }
+
+      function addHeatLayer(heatData) {
+        // Ensure Leaflet and Leaflet.heat are loaded
+        if (typeof L === "undefined" || typeof L.heatLayer === "undefined") {
+          console.error("Leaflet or Leaflet.heat is not loaded.");
+          return;
+        }
+
+        // Create a heatmap layer
+        const heatLayer = L.heatLayer(heatData, {
+          radius: 3,
+          minOpacity: 1,
+          blur: 1,
+          gradient: { 0: "red", 1: "red" },
+        });
+
+        // Add the heatmap layer to the map
+        heatLayer.addTo(map);
+      }
+    </script>
   </body>
 </html>
