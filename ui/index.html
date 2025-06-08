@@ -12,6 +12,10 @@
     <!-- Leaflet.heat plugin -->
     <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
     <style>
+      * {
+        box-sizing: border-box;
+      }
+
       body {
         margin: 0;
         padding: 0;
@@ -28,6 +32,36 @@
         padding: 20px;
         background-color: #f0f0f0;
         overflow-y: auto;
+
+        h1 {
+          font-size: 20px;
+          margin-bottom: 10px;
+        }
+
+        h2 {
+          font-size: 18px;
+          margin-top: 20px;
+        }
+
+        input:not([type="checkbox"]) {
+          width: 100%;
+          padding: 4px;
+        }
+
+        input {
+          margin-bottom: 10px;
+        }
+
+        button {
+          width: 100%;
+          padding: 8px;
+          background-color: #007bff;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+          font-weight: bold;
+        }
       }
 
       #map {
@@ -41,20 +75,165 @@
     <div id="container">
       <div id="controls">
         <h1>Strava Routes map</h1>
+        <h2>Authentication</h2>
+        <label for="api-key">
+          API Key:
+          <input
+            type="text"
+            id="api-key"
+            placeholder="Enter your API key"
+            value=""
+            oninput="localStorage.setItem('apiKey', this.value)"
+          />
+        </label>
+        <label for="strava-token">
+          Strava Token:
+          <input
+            type="text"
+            id="strava-token"
+            placeholder="Enter your Strava token"
+            value=""
+            oninput="localStorage.setItem('stravaToken', this.value)"
+          />
+        </label>
+        <hr />
+
+        <h2>Sync with Strava</h2>
+        <label for="sync-after">
+          From:
+          <input type="date" id="sync-after" />
+        </label>
+        <label for="sync-before">
+          To:
+          <input type="date" id="sync-before" />
+        </label>
+        <button onclick="sync()">Sync</button>
+        <hr />
+
+        <h2>Routes</h2>
+        <label for="routes-after">
+          From:
+          <input type="date" id="routes-after" />
+        </label>
+        <label for="routes-before">
+          To:
+          <input type="date" id="routes-before" />
+        </label>
+        <label for="walk">
+          <input type="checkbox" id="walk" value="Walk" />
+          Walk
+        </label>
+        <label for="ride">
+          <input type="checkbox" id="ride" value="Ride" />
+          Ride
+        </label>
+        <label for="run">
+          <input type="checkbox" id="run" value="Run" />
+          Run
+        </label>
+        <button id="fetch-routes" onclick="fetchRoutes()">Fetch Routes</button>
+        <p id="fetch-result"></p>
       </div>
       <div id="map" style="height: 100vh"></div>
     </div>
 
     <script>
       let map;
+      let heatLayer;
 
       window.onload = () => {
         initMap();
 
-        apiKey = localStorage.getItem("apiKey");
-        stravaToken = localStorage.getItem("stravaToken");
+        const apiKey = localStorage.getItem("apiKey");
+        const stravaToken = localStorage.getItem("stravaToken");
 
-        fetch("/routes", {
+        if (apiKey) {
+          document.getElementById("api-key").value = apiKey;
+        }
+        if (stravaToken) {
+          document.getElementById("strava-token").value = stravaToken;
+        }
+      };
+
+      function sync() {
+        const apiKey = document.getElementById("api-key").value;
+        const stravaToken = document.getElementById("strava-token").value;
+        const syncAfter = document.getElementById("sync-after").value;
+        const syncBefore = document.getElementById("sync-before").value;
+
+        if (!apiKey || !stravaToken) {
+          alert("Please enter both API Key and Strava Token.");
+          return;
+        }
+        if ((!syncAfter && !!syncBefore) || (!syncBefore && !!syncAfter)) {
+          alert(
+            "Please select both start and end dates for syncing, or leave both empty."
+          );
+          return;
+        }
+
+        localStorage.setItem("apiKey", apiKey);
+        localStorage.setItem("stravaToken", stravaToken);
+
+        const params = new URLSearchParams();
+        if (syncAfter) params.append("after", `${syncAfter}T00:00:00Z`);
+        if (syncBefore) params.append("before", `${syncBefore}T23:59:59Z`);
+        const queryString = params.toString();
+        const url = queryString
+          ? `/routes/sync?${queryString}`
+          : "/routes/sync";
+
+        fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Api-Key": apiKey || "",
+            "X-Strava-Token": stravaToken || "",
+          },
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data) {
+              alert(JSON.stringify(data, null, 2));
+            } else {
+              console.error("No message in response data.");
+            }
+          })
+          .catch((error) => console.error("Error syncing routes:", error));
+      }
+
+      function fetchRoutes() {
+        if (heatLayer) {
+          map.removeLayer(heatLayer);
+          heatLayer = null;
+        }
+
+        const apiKey = document.getElementById("api-key").value;
+        const stravaToken = document.getElementById("strava-token").value;
+        const routesAfter = document.getElementById("routes-after").value;
+        const routesBefore = document.getElementById("routes-before").value;
+        const walk = document.getElementById("walk").checked;
+        const ride = document.getElementById("ride").checked;
+        const run = document.getElementById("run").checked;
+
+        if (!apiKey || !stravaToken) {
+          alert("Please enter both API Key and Strava Token.");
+          return;
+        }
+
+        localStorage.setItem("apiKey", apiKey);
+        localStorage.setItem("stravaToken", stravaToken);
+
+        const params = new URLSearchParams();
+        if (routesAfter) params.append("after", `${routesAfter}T00:00:00Z`);
+        if (routesBefore) params.append("before", `${routesBefore}T23:59:59Z`);
+        if (walk) params.append("types", "Walk");
+        if (ride) params.append("types", "Ride");
+        if (run) params.append("types", "Run");
+        const queryString = params.toString();
+        const url = queryString ? `/routes?${queryString}` : "/routes";
+
+        fetch(url, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -66,12 +245,15 @@
           .then((data) => {
             if (data?.routemap?.points) {
               addHeatLayer(data.routemap.points);
+              document.getElementById(
+                "fetch-result"
+              ).textContent = `Fetched ${data.activityCount} activities.`;
             } else {
               console.error("No route data available.");
             }
           })
           .catch((error) => console.error("Error fetching routes:", error));
-      };
+      }
 
       function initMap() {
         // Ensure Leaflet and Leaflet.heat are loaded
@@ -97,7 +279,7 @@
         }
 
         // Create a heatmap layer
-        const heatLayer = L.heatLayer(heatData, {
+        heatLayer = L.heatLayer(heatData, {
           radius: 3,
           minOpacity: 1,
           blur: 1,
