@@ -89,7 +89,5 @@ Open your browser:
 Publish new docker image:
 
 ```bash
-cd api
-
 ./deploy.sh
 ```

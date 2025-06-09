@@ -4,7 +4,7 @@ FROM python:3.12-slim
 WORKDIR /app
 
 # Install dependencies
-COPY ../requirements.txt .
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the files
@@ -14,4 +14,4 @@ COPY . .
 EXPOSE 5400
 
 # Run the FastAPI app
-CMD ["fastapi", "run", "main.py", "--port", "5400"]
+CMD ["fastapi", "run", "api/main.py", "--port", "5400"]
