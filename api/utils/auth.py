@@ -2,6 +2,7 @@ import string
 import secrets
 import hashlib
 import os
+from typing import Annotated
 from fastapi import HTTPException, Header, Request, Security, status
 from fastapi.security import APIKeyHeader
 
@@ -15,10 +16,13 @@ api_key_header = APIKeyHeader(name="X-Api-Key", scheme_name="API Key", auto_erro
 
 async def auth_user(
     request: Request,
-    api_key: str = Security(api_key_header),
-    strava_token: str = Header(
-        ..., alias="X-Strava-Token", description="Strava access token for the user"
-    ),
+    api_key: Annotated[str, Security(api_key_header)],
+    strava_token: Annotated[
+        str,
+        Header(
+            ..., alias="X-Strava-Token", description="Strava access token for the user"
+        ),
+    ],
 ) -> User:
     db: AsyncDatabase = request.app.state.db
     logger = get_logger()

@@ -1,7 +1,9 @@
 from datetime import datetime
+from typing import Annotated
 from fastapi import APIRouter, Depends, Query, Request, status
 
 from api.modules.routes import get_routes, sync_routes
+from api.types.auth import User
 from api.types.routes import ActivityType, RoutesResponse, SyncResponse
 from api.utils.auth import auth_user
 from api.utils.query_validators import validate_before_after
@@ -27,19 +29,25 @@ router = APIRouter(
 )
 async def get_get_routes(
     req: Request,
-    user=Depends(auth_user),
-    after: datetime | None = Query(
-        None,
-        description="Filter activities after this date - ISO 8601 format, e.g., '2023-10-01T00:00:00Z'",
-    ),
-    before: datetime | None = Query(
-        None,
-        description="Filter activities before this date - ISO 8601 format, e.g., '2023-10-01T00:00:00Z'",
-    ),
-    types: list[ActivityType] | None = Query(
-        None,
-        description="Filter activities by type ('Walk', 'Run', 'Ride'). If not provided, all types are included.",
-    ),
+    user: Annotated[User, Depends(auth_user)],
+    after: Annotated[
+        datetime | None,
+        Query(
+            description="Filter activities after this date - ISO 8601 format, e.g., '2023-10-01T00:00:00Z'",
+        ),
+    ] = None,
+    before: Annotated[
+        datetime | None,
+        Query(
+            description="Filter activities before this date - ISO 8601 format, e.g., '2023-10-01T00:00:00Z'",
+        ),
+    ] = None,
+    types: Annotated[
+        list[ActivityType] | None,
+        Query(
+            description="Filter activities by type ('Walk', 'Run', 'Ride'). If not provided, all types are included.",
+        ),
+    ] = None,
 ) -> RoutesResponse:
     return await get_routes(
         db=req.app.state.db, user=user, before=before, after=after, types=types
@@ -62,7 +70,7 @@ async def get_get_routes(
 )
 async def post_sync_routes(
     req: Request,
-    user=Depends(auth_user),
-    params=Depends(validate_before_after),
+    user: Annotated[User, Depends(auth_user)],
+    params: Annotated[dict[str, datetime | None], Depends(validate_before_after)],
 ) -> SyncResponse:
     return await sync_routes(req.app.state.db, user, **params)
