@@ -2,7 +2,7 @@
 # using the latest deployed image from Docker Hub
 
 services:
-  pkrddit:
+  stravarts:
     image: kinp/stravarts:latest
     ports:
       - "5400:5400"
