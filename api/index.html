@@ -83,7 +83,7 @@
             id="api-key"
             placeholder="Enter your API key"
             value=""
-            oninput="localStorage.setItem('apiKey', this.value)"
+            oninput="localStorage.setItem('stravaRtsApiKey', this.value)"
           />
         </label>
         <label for="strava-token">
@@ -93,7 +93,7 @@
             id="strava-token"
             placeholder="Enter your Strava token"
             value=""
-            oninput="localStorage.setItem('stravaToken', this.value)"
+            oninput="localStorage.setItem('stravaRtsStravaToken', this.value)"
           />
         </label>
         <hr />
@@ -144,8 +144,8 @@
       window.onload = () => {
         initMap();
 
-        const apiKey = localStorage.getItem("apiKey");
-        const stravaToken = localStorage.getItem("stravaToken");
+        const apiKey = localStorage.getItem("stravaRtsApiKey");
+        const stravaToken = localStorage.getItem("stravaRtsStravaToken");
 
         if (apiKey) {
           document.getElementById("api-key").value = apiKey;
@@ -172,8 +172,8 @@
           return;
         }
 
-        localStorage.setItem("apiKey", apiKey);
-        localStorage.setItem("stravaToken", stravaToken);
+        localStorage.setItem("stravaRtsApiKey", apiKey);
+        localStorage.setItem("stravaRtsStravaToken", stravaToken);
 
         const params = new URLSearchParams();
         if (syncAfter) params.append("after", `${syncAfter}T00:00:00Z`);
@@ -224,8 +224,8 @@
           return;
         }
 
-        localStorage.setItem("apiKey", apiKey);
-        localStorage.setItem("stravaToken", stravaToken);
+        localStorage.setItem("stravaRtsApiKey", apiKey);
+        localStorage.setItem("stravaRtsStravaToken", stravaToken);
 
         const params = new URLSearchParams();
         if (routesAfter) params.append("after", `${routesAfter}T00:00:00Z`);
