@@ -180,8 +180,8 @@
         if (syncBefore) params.append("before", `${syncBefore}T23:59:59Z`);
         const queryString = params.toString();
         const url = queryString
-          ? `/routes/sync?${queryString}`
-          : "/routes/sync";
+          ? `./routes/sync?${queryString}`
+          : "./routes/sync";
 
         startLoading("sync");
 
@@ -234,7 +234,7 @@
         if (ride) params.append("types", "Ride");
         if (run) params.append("types", "Run");
         const queryString = params.toString();
-        const url = queryString ? `/routes?${queryString}` : "/routes";
+        const url = queryString ? `./routes?${queryString}` : "./routes";
 
         startLoading("fetch-routes");
 
